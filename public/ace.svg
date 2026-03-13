@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="400" height="500">
+  <defs>
+    <!-- Drop shadow for the overall character -->
+    <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000" flood-opacity="0.2" />
+    </filter>
+    
+    <!-- The core "Gumdrop" shape path to clip the belly and headband -->
+    <clipPath id="body-shape">
+       <path d="M 45 100 C 45 30, 155 30, 155 100 C 160 180, 145 215, 100 215 C 55 215, 40 180, 45 100 Z" />
+    </clipPath>
+  </defs>
+
+  <!-- 1. FLOOR SHADOW -->
+  <ellipse cx="100" cy="225" rx="55" ry="8" fill="rgba(0,0,0,0.15)" />
+
+  <!-- Character Group -->
+  <g filter="url(#drop-shadow)">
+    
+    <!-- 2. EARS -->
+    <g>
+      <circle cx="55" cy="55" r="14" fill="#E6B98A" />
+      <circle cx="55" cy="57" r="6" fill="#F9E4C8" />
+      <circle cx="145" cy="55" r="14" fill="#E6B98A" />
+      <circle cx="145" cy="57" r="6" fill="#F9E4C8" />
+    </g>
+
+    <!-- 3. FEET -->
+    <!-- Detached, cute little bean feet -->
+    <rect x="65" y="208" width="22" height="14" rx="7" fill="#D4A373" />
+    <rect x="113" y="208" width="22" height="14" rx="7" fill="#D4A373" />
+
+    <!-- 4. MAIN BODY (The Gumdrop) -->
+    <path 
+      d="M 45 100 C 45 30, 155 30, 155 100 C 160 180, 145 215, 100 215 C 55 215, 40 180, 45 100 Z" 
+      fill="#E6B98A" 
+    />
+    
+    <!-- 5. CLIPPED BELLY -->
+    <g clip-path="url(#body-shape)">
+      <!-- Soft, wide belly patch -->
+      <ellipse cx="100" cy="165" rx="42" ry="45" fill="#F9E4C8" />
+    </g>
+
+    <!-- 5.5 SPORTY MEDAL -->
+    <g>
+      <!-- Ribbon - drawn under the muzzle -->
+      <path d="M 65 125 L 100 155 L 135 125" fill="none" stroke="#E53E3E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 65 125 L 100 155 L 135 125" fill="none" stroke="#9B2C2C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.3" />
+      
+      <!-- Medal Coin -->
+      <g transform="translate(100, 165)">
+        <circle cx="0" cy="0" r="16" fill="#F6E05E" />
+        <circle cx="0" cy="0" r="12" fill="#D69E2E" />
+        <!-- Match Logo "M" -->
+        <path d="M -6 4 L -6 -4 L 0 2 L 6 -4 L 6 4" fill="none" stroke="#FFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </g>
+
+    <!-- 6. MUZZLE / CHEEKS -->
+    <!-- Squashed and wide to emphasize the cheeks -->
+    <ellipse cx="100" cy="115" rx="36" ry="22" fill="#F9E4C8" />
+    
+    <!-- Nose -->
+    <ellipse cx="100" cy="106" rx="10" ry="6.5" fill="#2D3748" />
+    
+    <!-- Mouth -->
+    <path d="M 86 118 Q 100 130 114 118" fill="none" stroke="#2D3748" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Rosy Cheeks -->
+    <circle cx="68" cy="115" r="7" fill="#FFB6C1" opacity="0.8" />
+    <circle cx="132" cy="115" r="7" fill="#FFB6C1" opacity="0.8" />
+
+    <!-- 7. MASSIVE DUOLINGO EYES -->
+    <!-- Left Eye -->
+    <g transform="translate(72, 88)">
+      <circle cx="0" cy="0" r="11" fill="#2D3748" />
+      <circle cx="3.5" cy="-3.5" r="3.5" fill="#FFF" />
+    </g>
+
+    <!-- Right Eye -->
+    <g transform="translate(128, 88)">
+      <circle cx="0" cy="0" r="11" fill="#2D3748" />
+      <circle cx="3.5" cy="-3.5" r="3.5" fill="#FFF" />
+    </g>
+
+    <!-- 8. CURVED HEADBAND -->
+    <!-- Clipped to the body shape so it wraps perfectly without overflowing the edges -->
+    <g clip-path="url(#body-shape)">
+      <path d="M 30 68 Q 100 80 170 68 L 170 54 Q 100 66 30 54 Z" fill="#00D2FF" />
+      <!-- Highlight perfectly centered horizontally and vertically on the headband -->
+      <path d="M 85 67 L 115 67" fill="none" stroke="#FFF" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+    </g>
+
+    <!-- 9. ARMS (Stubby & Expressive) -->
+    <!-- Cute little nubs resting at sides for the idle state -->
+    <line x1="45" y1="135" x2="38" y2="160" stroke="#E6B98A" stroke-width="18" stroke-linecap="round" />
+    <line x1="155" y1="135" x2="162" y2="160" stroke="#E6B98A" stroke-width="18" stroke-linecap="round" />
+
+  </g>
+</svg>

@@ -1,0 +1,696 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ───
+
+enum Role {
+  PLAYER
+  MERCHANT
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum SessionMode {
+  QUICK_MATCH
+  SCHEDULE_MATCH
+}
+
+enum GameType {
+  SINGLES
+  DOUBLES
+}
+
+enum SessionStatus {
+  SEARCHING
+  OPEN
+  CONFIRMING
+  MATCHED
+  BOOKED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionPlayerRole {
+  CREATOR
+  MEMBER
+  BACKFILL
+}
+
+enum SessionPlayerStatus {
+  PENDING
+  CONFIRMED
+  VENUE_CONFIRMED
+  DECLINED
+  LEFT
+  REMOVED
+}
+
+enum MatchRequestType {
+  SYSTEM_AUTO
+  MANUAL_FEED
+  AUTOFILL_INVITE
+  SCHEDULE_JOIN
+}
+
+enum MatchRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  TIMEOUT
+  CANCELLED
+  SUPERSEDED
+}
+
+enum AvailabilityType {
+  RECURRING
+  ONE_OFF
+}
+
+enum VenueProposalStatus {
+  PROPOSED
+  CONFIRMED
+  REJECTED
+}
+
+enum VenueProposalVoteType {
+  CONFIRM
+  REJECT
+}
+
+enum BookingStatus {
+  PENDING
+  PAID
+  REFUNDED
+  PARTIALLY_REFUNDED
+  FAILED
+}
+
+enum PaymentShareStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum PayoutStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ChatRoomType {
+  SESSION_GROUP
+  DIRECT
+}
+
+enum NotificationType {
+  MATCH_FOUND
+  JOIN_REQUEST
+  SESSION_FULL
+  SESSION_CANCELLED
+  VENUE_CONFIRMED
+  BOOKING_CONFIRMED
+  PAYMENT_RECEIVED
+  RATING_REMINDER
+  CHAT_MESSAGE
+}
+
+enum ConfigDataType {
+  STRING
+  INT
+  FLOAT
+  BOOLEAN
+}
+
+// ─── USERS & PROFILES ───
+
+model User {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId  String    @unique @map("auth_user_id") @db.Uuid
+  role        Role
+  email       String
+  displayName String    @map("display_name")
+  avatarUrl   String?   @map("avatar_url")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  playerProfile          PlayerProfile?
+  merchantProfile        MerchantProfile?
+  notificationPreference NotificationPreference?
+
+  createdSessions       Session[]              @relation("SessionCreator")
+  sessionPlayers        SessionPlayer[]        @relation("SessionPlayerUser")
+  pairedWithPlayers     SessionPlayer[]        @relation("SessionPlayerPairedWith")
+  quickMatchQueueEntries QuickMatchQueueEntry[]
+  sentMatchRequests     MatchRequest[]         @relation("MatchRequestRequester")
+  receivedMatchRequests MatchRequest[]         @relation("MatchRequestRecipient")
+  declineCooldownsAsA   DeclineCooldown[]      @relation("DeclineCooldownPlayerA")
+  declineCooldownsAsB   DeclineCooldown[]      @relation("DeclineCooldownPlayerB")
+  venueProposals        VenueProposal[]        @relation("VenueProposalProposer")
+  venueProposalVotes    VenueProposalVote[]
+  bookingPlayerShares   BookingPlayerShare[]
+  chatParticipants      ChatParticipant[]
+  chatMessages          ChatMessage[]
+  messageReadReceipts   MessageReadReceipt[]
+  venueReviews          VenueReview[]
+  ratingsGiven          PlayerRating[]         @relation("PlayerRatingRater")
+  ratingsReceived       PlayerRating[]         @relation("PlayerRatingRated")
+  notifications         Notification[]
+
+  @@map("users")
+}
+
+model PlayerProfile {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                  String    @unique @map("user_id") @db.Uuid
+  skillLevel              SkillLevel @map("skill_level")
+  latitude                Decimal?  @db.Decimal(10, 7)
+  longitude               Decimal?  @db.Decimal(10, 7)
+  searchRadiusKm          Int       @default(10) @map("search_radius_km")
+  bio                     String?
+  gamesPlayed             Int       @default(0) @map("games_played")
+  avgSportsmanshipRating  Decimal   @default(0) @map("avg_sportsmanship_rating") @db.Decimal(3, 2)
+  totalRatingsReceived    Int       @default(0) @map("total_ratings_received")
+  availabilityPreferences Json?     @map("availability_preferences")
+  quickMatchWindowMinutes Int       @default(120) @map("quick_match_window_minutes")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("player_profiles")
+}
+
+model MerchantProfile {
+  id                       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                   String   @unique @map("user_id") @db.Uuid
+  businessName             String   @map("business_name")
+  stripeConnectAccountId   String?  @map("stripe_connect_account_id")
+  stripeChargesEnabled     Boolean  @default(false) @map("stripe_charges_enabled")
+  stripeOnboardingComplete Boolean  @default(false) @map("stripe_onboarding_complete")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  user    User            @relation(fields: [userId], references: [id])
+  venues  Venue[]
+  payouts MerchantPayout[]
+
+  @@map("merchant_profiles")
+}
+
+// ─── VENUES & COURTS ───
+
+model Venue {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  merchantId   String    @map("merchant_id") @db.Uuid
+  name         String
+  description  String?
+  address      String
+  latitude     Decimal   @db.Decimal(10, 7)
+  longitude    Decimal   @db.Decimal(10, 7)
+  avgRating    Decimal   @default(0) @map("avg_rating") @db.Decimal(3, 2)
+  totalReviews Int       @default(0) @map("total_reviews")
+  photoUrls    String[]  @map("photo_urls")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  merchant       MerchantProfile @relation(fields: [merchantId], references: [id])
+  courts         Court[]
+  upsellItems    UpsellItem[]
+  venueReviews   VenueReview[]
+  venueProposals VenueProposal[]
+  sessions       Session[]       @relation("SessionVenue")
+  bookings       Booking[]
+
+  @@index([merchantId])
+  @@map("venues")
+}
+
+model Court {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  venueId    String    @map("venue_id") @db.Uuid
+  name       String
+  capacity   Int       @default(4)
+  hourlyRate Decimal   @map("hourly_rate") @db.Decimal(10, 2)
+  photoUrls  String[]  @map("photo_urls")
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  venue          Venue               @relation(fields: [venueId], references: [id])
+  availabilities CourtAvailability[]
+  venueProposals VenueProposal[]
+  sessions       Session[]           @relation("SessionCourt")
+  bookings       Booking[]
+
+  @@index([venueId])
+  @@map("courts")
+}
+
+model CourtAvailability {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courtId      String           @map("court_id") @db.Uuid
+  type         AvailabilityType
+  dayOfWeek    Int?             @map("day_of_week")
+  specificDate DateTime?        @map("specific_date") @db.Date
+  startTime    DateTime         @map("start_time") @db.Time()
+  endTime      DateTime         @map("end_time") @db.Time()
+  isAvailable  Boolean          @default(true) @map("is_available")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  court Court @relation(fields: [courtId], references: [id])
+
+  @@index([courtId, dayOfWeek])
+  @@index([courtId, specificDate])
+  @@map("court_availabilities")
+}
+
+model UpsellItem {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  venueId     String    @map("venue_id") @db.Uuid
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  photoUrl    String?   @map("photo_url")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  venue          Venue           @relation(fields: [venueId], references: [id])
+  bookingUpsells BookingUpsell[]
+
+  @@index([venueId])
+  @@map("upsell_items")
+}
+
+// ─── SESSIONS & MATCHING ───
+
+model Session {
+  id                     String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mode                   SessionMode
+  gameType               GameType      @map("game_type")
+  status                 SessionStatus @default(SEARCHING)
+  creatorId              String        @map("creator_id") @db.Uuid
+  maxPlayers             Int           @map("max_players")
+  currentPlayerCount     Int           @default(1) @map("current_player_count")
+  preferredSkillMin      SkillLevel?   @map("preferred_skill_min")
+  preferredSkillMax      SkillLevel?   @map("preferred_skill_max")
+  autoAccept             Boolean       @default(false) @map("auto_accept")
+  scheduledStartTime     DateTime?     @map("scheduled_start_time")
+  scheduledEndTime       DateTime?     @map("scheduled_end_time")
+  actualStartTime        DateTime?     @map("actual_start_time")
+  actualEndTime          DateTime?     @map("actual_end_time")
+  venueId                String?       @map("venue_id") @db.Uuid
+  courtId                String?       @map("court_id") @db.Uuid
+  venueConfirmedAt       DateTime?     @map("venue_confirmed_at")
+  venueSelectionDeadline DateTime?     @map("venue_selection_deadline")
+  cancelReason           String?       @map("cancel_reason")
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
+  deletedAt              DateTime?     @map("deleted_at")
+
+  creator        User            @relation("SessionCreator", fields: [creatorId], references: [id])
+  venue          Venue?          @relation("SessionVenue", fields: [venueId], references: [id])
+  court          Court?          @relation("SessionCourt", fields: [courtId], references: [id])
+  players        SessionPlayer[]
+  matchRequests  MatchRequest[]
+  venueProposals VenueProposal[]
+  booking        Booking?
+  chatRoom       ChatRoom?
+  venueReviews   VenueReview[]
+  playerRatings  PlayerRating[]
+  quickMatchQueueEntries QuickMatchQueueEntry[] @relation("QueuePairSession")
+
+  @@index([status, mode])
+  @@index([creatorId])
+  @@map("sessions")
+}
+
+model SessionPlayer {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId          String              @map("session_id") @db.Uuid
+  playerId           String              @map("player_id") @db.Uuid
+  role               SessionPlayerRole
+  status             SessionPlayerStatus @default(PENDING)
+  isPairUnit         Boolean             @default(false) @map("is_pair_unit")
+  pairedWithPlayerId String?             @map("paired_with_player_id") @db.Uuid
+  joinedAt           DateTime            @default(now()) @map("joined_at")
+  leftAt             DateTime?           @map("left_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+
+  session        Session @relation(fields: [sessionId], references: [id])
+  player         User    @relation("SessionPlayerUser", fields: [playerId], references: [id])
+  pairedWithPlayer User? @relation("SessionPlayerPairedWith", fields: [pairedWithPlayerId], references: [id])
+
+  @@unique([sessionId, playerId])
+  @@index([playerId])
+  @@map("session_players")
+}
+
+model QuickMatchQueueEntry {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  playerId       String   @map("player_id") @db.Uuid
+  gameType       GameType @map("game_type")
+  latitude       Decimal  @db.Decimal(10, 7)
+  longitude      Decimal  @db.Decimal(10, 7)
+  searchRadiusKm Int      @map("search_radius_km")
+  skillLevel     SkillLevel @map("skill_level")
+  windowStart    DateTime @map("window_start")
+  windowEnd      DateTime @map("window_end")
+  isPair         Boolean  @default(false) @map("is_pair")
+  pairSessionId  String?  @map("pair_session_id") @db.Uuid
+  isActive       Boolean  @default(true) @map("is_active")
+  hasPriority    Boolean  @default(false) @map("has_priority")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  player      User     @relation(fields: [playerId], references: [id])
+  pairSession Session? @relation("QueuePairSession", fields: [pairSessionId], references: [id])
+
+  @@index([isActive, gameType, latitude, longitude])
+  @@index([playerId])
+  @@map("quick_match_queue_entries")
+}
+
+model MatchRequest {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId      String?            @map("session_id") @db.Uuid
+  requesterId    String             @map("requester_id") @db.Uuid
+  recipientId    String             @map("recipient_id") @db.Uuid
+  type           MatchRequestType
+  status         MatchRequestStatus @default(PENDING)
+  compositeScore Decimal?           @map("composite_score") @db.Decimal(10, 4)
+  expiresAt      DateTime           @map("expires_at")
+  respondedAt    DateTime?          @map("responded_at")
+  cancelReason   String?            @map("cancel_reason")
+  createdAt      DateTime           @default(now()) @map("created_at")
+
+  session   Session? @relation(fields: [sessionId], references: [id])
+  requester User     @relation("MatchRequestRequester", fields: [requesterId], references: [id])
+  recipient User     @relation("MatchRequestRecipient", fields: [recipientId], references: [id])
+
+  @@index([recipientId, status])
+  @@index([sessionId])
+  @@map("match_requests")
+}
+
+model DeclineCooldown {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  playerAId String   @map("player_a_id") @db.Uuid
+  playerBId String   @map("player_b_id") @db.Uuid
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  playerA User @relation("DeclineCooldownPlayerA", fields: [playerAId], references: [id])
+  playerB User @relation("DeclineCooldownPlayerB", fields: [playerBId], references: [id])
+
+  @@index([playerAId, playerBId, expiresAt])
+  @@map("decline_cooldowns")
+}
+
+model VenueProposal {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId         String              @map("session_id") @db.Uuid
+  venueId           String              @map("venue_id") @db.Uuid
+  courtId           String              @map("court_id") @db.Uuid
+  proposedById      String              @map("proposed_by_id") @db.Uuid
+  rank              Int?
+  distanceToMidpoint Decimal?           @map("distance_to_midpoint") @db.Decimal(10, 4)
+  price             Decimal?            @db.Decimal(10, 2)
+  status            VenueProposalStatus @default(PROPOSED)
+  createdAt         DateTime            @default(now()) @map("created_at")
+
+  session    Session             @relation(fields: [sessionId], references: [id])
+  venue      Venue               @relation(fields: [venueId], references: [id])
+  court      Court               @relation(fields: [courtId], references: [id])
+  proposedBy User                @relation("VenueProposalProposer", fields: [proposedById], references: [id])
+  votes      VenueProposalVote[]
+
+  @@index([sessionId])
+  @@map("venue_proposals")
+}
+
+model VenueProposalVote {
+  id         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  proposalId String                @map("proposal_id") @db.Uuid
+  playerId   String                @map("player_id") @db.Uuid
+  vote       VenueProposalVoteType
+  createdAt  DateTime              @default(now()) @map("created_at")
+
+  proposal VenueProposal @relation(fields: [proposalId], references: [id])
+  player   User          @relation(fields: [playerId], references: [id])
+
+  @@unique([proposalId, playerId])
+  @@map("venue_proposal_votes")
+}
+
+// ─── BOOKINGS & PAYMENTS ───
+
+model Booking {
+  id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId               String        @unique @map("session_id") @db.Uuid
+  venueId                 String        @map("venue_id") @db.Uuid
+  courtId                 String        @map("court_id") @db.Uuid
+  startTime               DateTime      @map("start_time")
+  endTime                 DateTime      @map("end_time")
+  totalCourtCost          Decimal       @map("total_court_cost") @db.Decimal(10, 2)
+  totalUpsellCost         Decimal       @map("total_upsell_cost") @db.Decimal(10, 2)
+  totalAmount             Decimal       @map("total_amount") @db.Decimal(10, 2)
+  commissionAmount        Decimal       @map("commission_amount") @db.Decimal(10, 2)
+  commissionRate          Decimal       @map("commission_rate") @db.Decimal(5, 4)
+  merchantPayoutAmount    Decimal       @map("merchant_payout_amount") @db.Decimal(10, 2)
+  stripeCheckoutSessionId String?       @map("stripe_checkout_session_id")
+  stripePaymentIntentId   String?       @map("stripe_payment_intent_id")
+  status                  BookingStatus @default(PENDING)
+  paidAt                  DateTime?     @map("paid_at")
+  refundedAt              DateTime?     @map("refunded_at")
+  createdAt               DateTime      @default(now()) @map("created_at")
+  updatedAt               DateTime      @updatedAt @map("updated_at")
+
+  session       Session              @relation(fields: [sessionId], references: [id])
+  venue         Venue                @relation(fields: [venueId], references: [id])
+  court         Court                @relation(fields: [courtId], references: [id])
+  playerShares  BookingPlayerShare[]
+  merchantPayout MerchantPayout?
+
+  @@index([venueId])
+  @@map("bookings")
+}
+
+model BookingPlayerShare {
+  id                    String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId             String             @map("booking_id") @db.Uuid
+  playerId              String             @map("player_id") @db.Uuid
+  courtShareAmount      Decimal            @map("court_share_amount") @db.Decimal(10, 2)
+  upsellTotal           Decimal            @map("upsell_total") @db.Decimal(10, 2)
+  totalAmount           Decimal            @map("total_amount") @db.Decimal(10, 2)
+  stripePaymentIntentId String?            @map("stripe_payment_intent_id")
+  status                PaymentShareStatus @default(PENDING)
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  booking Booking         @relation(fields: [bookingId], references: [id])
+  player  User            @relation(fields: [playerId], references: [id])
+  upsells BookingUpsell[]
+
+  @@unique([bookingId, playerId])
+  @@map("booking_player_shares")
+}
+
+model BookingUpsell {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingPlayerShareId String   @map("booking_player_share_id") @db.Uuid
+  upsellItemId         String   @map("upsell_item_id") @db.Uuid
+  name                 String
+  price                Decimal  @db.Decimal(10, 2)
+  quantity             Int      @default(1)
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  bookingPlayerShare BookingPlayerShare @relation(fields: [bookingPlayerShareId], references: [id])
+  upsellItem         UpsellItem         @relation(fields: [upsellItemId], references: [id])
+
+  @@index([bookingPlayerShareId])
+  @@map("booking_upsells")
+}
+
+model MerchantPayout {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  merchantId       String       @map("merchant_id") @db.Uuid
+  bookingId        String       @unique @map("booking_id") @db.Uuid
+  amount           Decimal      @db.Decimal(10, 2)
+  stripeTransferId String?      @map("stripe_transfer_id")
+  stripePayoutId   String?      @map("stripe_payout_id")
+  status           PayoutStatus @default(PENDING)
+  completedAt      DateTime?    @map("completed_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  merchant MerchantProfile @relation(fields: [merchantId], references: [id])
+  booking  Booking         @relation(fields: [bookingId], references: [id])
+
+  @@index([merchantId])
+  @@map("merchant_payouts")
+}
+
+// ─── CHAT ───
+
+model ChatRoom {
+  id                  String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type                ChatRoomType
+  sessionId           String?      @unique @map("session_id") @db.Uuid
+  createdAt           DateTime     @default(now()) @map("created_at")
+  retentionExpiresAt  DateTime?    @map("retention_expires_at")
+  deletedAt           DateTime?    @map("deleted_at")
+
+  session      Session?          @relation(fields: [sessionId], references: [id])
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@map("chat_rooms")
+}
+
+model ChatParticipant {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatRoomId String    @map("chat_room_id") @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  joinedAt   DateTime  @default(now()) @map("joined_at")
+  leftAt     DateTime? @map("left_at")
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([chatRoomId, userId])
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatRoomId String    @map("chat_room_id") @db.Uuid
+  senderId   String    @map("sender_id") @db.Uuid
+  content    String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  chatRoom     ChatRoom             @relation(fields: [chatRoomId], references: [id])
+  sender       User                 @relation(fields: [senderId], references: [id])
+  readReceipts MessageReadReceipt[]
+
+  @@index([chatRoomId, createdAt])
+  @@map("chat_messages")
+}
+
+model MessageReadReceipt {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  messageId String   @map("message_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  readAt    DateTime @default(now()) @map("read_at")
+
+  message ChatMessage @relation(fields: [messageId], references: [id])
+  user    User        @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId])
+  @@map("message_read_receipts")
+}
+
+// ─── RATINGS & REVIEWS ───
+
+model VenueReview {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  venueId      String    @map("venue_id") @db.Uuid
+  playerId     String    @map("player_id") @db.Uuid
+  sessionId    String    @map("session_id") @db.Uuid
+  rating       Int
+  reviewText   String?   @map("review_text")
+  isReported   Boolean   @default(false) @map("is_reported")
+  reportReason String?   @map("report_reason")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  venue   Venue   @relation(fields: [venueId], references: [id])
+  player  User    @relation(fields: [playerId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id])
+
+  @@unique([playerId, sessionId])
+  @@index([venueId])
+  @@map("venue_reviews")
+}
+
+model PlayerRating {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ratedPlayerId        String   @map("rated_player_id") @db.Uuid
+  raterPlayerId        String   @map("rater_player_id") @db.Uuid
+  sessionId            String   @map("session_id") @db.Uuid
+  sportsmanshipRating  Int      @map("sportsmanship_rating")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  ratedPlayer User    @relation("PlayerRatingRated", fields: [ratedPlayerId], references: [id])
+  raterPlayer User    @relation("PlayerRatingRater", fields: [raterPlayerId], references: [id])
+  session     Session @relation(fields: [sessionId], references: [id])
+
+  @@unique([raterPlayerId, ratedPlayerId, sessionId])
+  @@index([ratedPlayerId])
+  @@map("player_ratings")
+}
+
+// ─── NOTIFICATIONS ───
+
+model Notification {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+  matchFound            Boolean  @default(true) @map("match_found")
+  sessionUpdates        Boolean  @default(true) @map("session_updates")
+  chatMessages          Boolean  @default(true) @map("chat_messages")
+  bookingConfirmations  Boolean  @default(true) @map("booking_confirmations")
+  ratingReminders       Boolean  @default(true) @map("rating_reminders")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notification_preferences")
+}
+
+// ─── SYSTEM CONFIG ───
+
+model SystemConfig {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String         @unique
+  value       String
+  description String?
+  dataType    ConfigDataType @map("data_type")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  @@map("system_config")
+}
