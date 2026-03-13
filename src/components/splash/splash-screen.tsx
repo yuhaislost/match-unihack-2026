@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
 
 type SplashPhase = "idle" | "ace-in" | "text-in" | "fading-out" | "done";
 
@@ -48,9 +48,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     >
       {/* Ace mascot */}
       <div
-        className={
-          phase !== "idle" ? "animate-splash-bounce" : "opacity-0"
-        }
+        className={phase !== "idle" ? "animate-splash-bounce" : "opacity-0"}
         style={{ opacity: phase === "idle" ? 0 : undefined }}
       >
         <Image
