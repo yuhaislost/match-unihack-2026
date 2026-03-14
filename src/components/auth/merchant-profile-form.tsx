@@ -17,6 +17,7 @@ export function MerchantProfileForm() {
   const handleSubmit = async () => {
     if (!businessName.trim()) return;
     await completeProfile.mutateAsync({ businessName: businessName.trim() });
+    router.refresh();
     router.push("/dashboard");
   };
 

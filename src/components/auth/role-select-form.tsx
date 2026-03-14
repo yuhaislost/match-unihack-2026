@@ -15,11 +15,14 @@ export function RoleSelectForm() {
   const handleContinue = async () => {
     if (!selected) return;
     await selectRole.mutateAsync({ role: selected });
-    if (selected === "PLAYER") {
-      router.push("/onboarding/player-profile");
-    } else {
-      router.push("/onboarding/merchant-profile");
-    }
+    // Invalidate the Router Cache so server components re-run with
+    // the freshly-created User record and updated app_metadata.
+    router.refresh();
+    router.push(
+      selected === "PLAYER"
+        ? "/onboarding/player-profile"
+        : "/onboarding/merchant-profile",
+    );
   };
 
   return (

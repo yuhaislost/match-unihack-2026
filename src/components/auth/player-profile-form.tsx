@@ -41,6 +41,7 @@ export function PlayerProfileForm() {
       skillLevel,
       bio: bio || undefined,
     });
+    router.refresh();
     router.push("/explore");
   };
 
