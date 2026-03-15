@@ -38,9 +38,17 @@ Match handles the entire journey from "I want to play" to "good game" — matchm
 
 Tap the hero card, choose Singles or Doubles, and enter a live queue. The system scores candidates on **availability, proximity, sportsmanship, and skill level**, then proposes a mutual match. Once all slots are filled, the top three nearby venues are surfaced and everyone confirms a court within minutes.
 
+<p align="center">
+  <img src="public/github/1.png" alt="Smart matching — Match found confirmation screen" width="700" />
+</p>
+
 ### Schedule Match — Plan a Game
 
 Create a session for a future date and publish it as an open lobby. Other players browse and request to join. If the session isn't full an hour before game time, the system **auto-fills** empty slots so no one is left hanging.
+
+<p align="center">
+  <img src="public/github/3.png" alt="Schedule Match — session creation and session list" width="700" />
+</p>
 
 ### The Full Session Lifecycle
 
@@ -76,6 +84,14 @@ The system uses a **dual-path matching** approach:
 
 If both paths fire simultaneously, the system match takes priority to prevent race conditions.
 
+### Skill-Based Onboarding
+
+Players set their skill level during onboarding so the algorithm can factor it into match quality from day one — while keeping the weight low enough that no one is blocked from getting a game.
+
+<p align="center">
+  <img src="public/github/2.png" alt="Player onboarding — skill level selection with Ace" width="700" />
+</p>
+
 ---
 
 ## The Explore Screen
@@ -88,9 +104,7 @@ The app's home view is designed to feel native despite being a web app:
 - The feed **never locks** — players can browse while Quick Match runs in the background
 
 <p align="center">
-  <img src="public/ace.svg" alt="Ace — the Match mascot" width="160" />
-  <br />
-  <em>Meet Ace, our mascot. He shows up at key emotional moments — celebrating a match, softening an empty queue, or guiding you through onboarding.</em>
+  <img src="public/github/4.png" alt="Match logo and Ace mascot" width="700" />
 </p>
 
 ---
