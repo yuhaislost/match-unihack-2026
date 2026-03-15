@@ -11,7 +11,7 @@ export function LoginForm() {
       <button
         type="button"
         onClick={() => signInWithGoogle()}
-        className="flex h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-white text-[15px] font-medium text-[#1f1f1f] transition-all duration-[var(--duration-fast)] hover:bg-white/90 active:scale-[0.98]"
+        className="flex h-13 w-full items-center justify-center gap-3 rounded-xl bg-white text-[15px] font-medium text-[#1f1f1f] transition-all duration-[var(--duration-fast)] hover:bg-white/90 active:scale-[0.98]"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <title>Google</title>
@@ -39,7 +39,7 @@ export function LoginForm() {
       <button
         type="button"
         onClick={() => signInWithApple()}
-        className="flex h-[52px] w-full items-center justify-center gap-3 rounded-xl border border-border bg-surface-2 text-[15px] font-medium text-text-primary transition-all duration-[var(--duration-fast)] hover:bg-surface-3 active:scale-[0.98]"
+        className="flex h-13 w-full items-center justify-center gap-3 rounded-xl border border-border bg-surface-2 text-[15px] font-medium text-text-primary transition-all duration-[var(--duration-fast)] hover:bg-surface-3 active:scale-[0.98]"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
           <title>Apple</title>
@@ -60,7 +60,7 @@ export function LoginForm() {
         type="button"
         className="flex h-[44px] w-full items-center justify-center rounded-xl text-small-medium text-text-secondary transition-colors hover:text-text-primary"
       >
-        Explore as guest
+        Continue with Email
       </button>
 
       {/* Legal */}

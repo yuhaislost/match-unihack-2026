@@ -88,12 +88,11 @@ export async function proxy(request: NextRequest) {
     return redirectTo(role === "MERCHANT" ? "/dashboard" : "/explore");
   }
 
-  // Root page — redirect authenticated users to role-based home
+  // Root page — always let through so the splash screen can render.
+  // The page component determines the redirect destination and passes
+  // it to the client-side SplashRedirect component.
   if (pathname === "/") {
-    if (!role) {
-      return redirectTo("/onboarding/role-select");
-    }
-    return redirectTo(role === "MERCHANT" ? "/dashboard" : "/explore");
+    return response;
   }
 
   // Onboarding routes — just need auth, no role check

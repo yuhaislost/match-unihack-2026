@@ -1,7 +1,14 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { BottomNav } from "@/components/nav/bottom-nav";
 import { findUserByAuthId } from "@/lib/services/auth";
 import { createServerSupabaseClient } from "@/lib/supabase";
+
+const PLAYER_NAV_ITEMS = [
+  { label: "Explore", href: "/explore", icon: "compass" },
+  { label: "Sessions", href: "/sessions", icon: "calendar-days" },
+  { label: "Profile", href: "/profile", icon: "user" },
+];
 
 export default async function PlayerLayout({
   children,
@@ -31,27 +38,8 @@ export default async function PlayerLayout({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <main className="flex-1 pb-16">{children}</main>
-      <nav className="fixed bottom-0 left-1/2 flex h-14 w-full max-w-[var(--viewport-max)] -translate-x-1/2 items-center justify-around border-t border-border bg-background safe-area-bottom">
-        <a
-          href="/explore"
-          className="text-small-medium text-text-secondary hover:text-text-primary"
-        >
-          Explore
-        </a>
-        <a
-          href="/sessions"
-          className="text-small-medium text-text-secondary hover:text-text-primary"
-        >
-          Sessions
-        </a>
-        <a
-          href="/profile"
-          className="text-small-medium text-text-secondary hover:text-text-primary"
-        >
-          Profile
-        </a>
-      </nav>
+      <main className="flex-1">{children}</main>
+      <BottomNav items={PLAYER_NAV_ITEMS} />
     </div>
   );
 }

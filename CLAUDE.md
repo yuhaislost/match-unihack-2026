@@ -371,7 +371,10 @@ return result.data;
 - Use `cn()` (from a `clsx` + `tailwind-merge` utility) for conditional class merging.
 
 ## Next.JS
-- Please refer to the Next.JS MCP server when developing with the framework to ensure correct implementation. 
+- Please refer to the Next.JS MCP server when developing with the framework to ensure correct implementation.
+- **Always use `<Link>` from `next/link`** for in-app navigation. Never use plain `<a>` tags for internal routes — they cause full page refreshes and break client-side navigation.
+- The **splash screen** only appears at the root URL (`/`). It is the page content of `src/app/page.tsx`, not a `loading.tsx` boundary. Do not add a root `loading.tsx`.
+- **Bottom tab navigation** uses the `BottomNav` client component (`src/components/nav/bottom-nav.tsx`). It uses `usePathname()` for active state and `<Link>` for instant client-side tab switching.
 
 ## Database
 - Prisma schema at `prisma/schema.prisma` defines business models (Essay, UserPreferences, CustomRubric, etc.)

@@ -1,10 +1,15 @@
-export default function SessionsPage() {
+import { SessionsList } from "@/components/schedule/sessions-list";
+import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
+
+export default async function SessionsPage() {
+  const queryClient = getQueryClient();
+  void queryClient.prefetchQuery(
+    trpc.session.listByPlayer.queryOptions({ limit: 20 }),
+  );
+
   return (
-    <div className="p-4">
-      <h1 className="text-title-lg">Sessions</h1>
-      <p className="text-body text-text-secondary mt-2">
-        Your upcoming and past sessions.
-      </p>
-    </div>
+    <HydrateClient>
+      <SessionsList />
+    </HydrateClient>
   );
 }

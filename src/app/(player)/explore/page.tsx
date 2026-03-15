@@ -1,10 +1,13 @@
-export default function ExplorePage() {
+import { ExploreContent } from "@/components/explore/explore-content";
+import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
+
+export default async function ExplorePage() {
+  const queryClient = getQueryClient();
+  void queryClient.prefetchQuery(trpc.matching.getQueueStatus.queryOptions());
+
   return (
-    <div className="p-4">
-      <h1 className="text-title-lg">Explore</h1>
-      <p className="text-body text-text-secondary mt-2">
-        Find nearby players and matches.
-      </p>
-    </div>
+    <HydrateClient>
+      <ExploreContent />
+    </HydrateClient>
   );
 }

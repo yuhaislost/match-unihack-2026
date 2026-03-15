@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
+import { Ace } from "@/components/ace/ace";
 
 type SplashPhase = "idle" | "ace-in" | "text-in" | "fading-out" | "done";
 
@@ -22,11 +22,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   }, [onComplete]);
 
   useEffect(() => {
-    // Immediately show Ace bouncing in
     const t1 = setTimeout(() => setPhase("ace-in"), 50);
-    // After Ace lands, fade in the text
     const t2 = setTimeout(() => setPhase("text-in"), 700);
-    // After a moment to read, fade out the whole splash
     const t3 = setTimeout(() => startFadeOut(), 2000);
 
     return () => {
@@ -46,21 +43,13 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         phase === "fading-out" ? "animate-splash-fade-out" : ""
       }`}
     >
-      {/* Ace mascot */}
       <div
         className={phase !== "idle" ? "animate-splash-bounce" : "opacity-0"}
         style={{ opacity: phase === "idle" ? 0 : undefined }}
       >
-        <Image
-          src="/ace.svg"
-          alt="Ace — the Match mascot"
-          width={160}
-          height={200}
-          priority
-        />
+        <Ace size={160} />
       </div>
 
-      {/* Wordmark + tagline */}
       <div
         className="mt-6 flex flex-col items-center gap-1 transition-all duration-500"
         style={{
@@ -68,8 +57,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           transform: showText ? "translateY(0)" : "translateY(8px)",
         }}
       >
-        <h1 className="text-display text-text-primary">match</h1>
-        <p className="text-small text-text-secondary">find your game</p>
+        <h1 className="text-display text-text-primary">Match</h1>
+        <p className="text-small text-text-secondary">Find your game</p>
       </div>
     </div>
   );

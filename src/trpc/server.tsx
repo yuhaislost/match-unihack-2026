@@ -38,9 +38,10 @@ export function HydrateClient(props: { children: React.ReactNode }) {
  * Non-blocking prefetch helper. Fires off a prefetch without awaiting it,
  * enabling the "render as you fetch" streaming pattern.
  */
-export function prefetch(
-  queryOptions: { queryKey: readonly unknown[]; queryFn: (...args: unknown[]) => Promise<unknown> },
-) {
+export function prefetch(queryOptions: {
+  queryKey: readonly unknown[];
+  queryFn: (...args: unknown[]) => Promise<unknown>;
+}) {
   const queryClient = getQueryClient();
   void queryClient.prefetchQuery(queryOptions);
 }

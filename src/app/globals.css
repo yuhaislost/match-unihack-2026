@@ -344,6 +344,17 @@ body {
   }
 }
 
+@keyframes hero-state-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes countdown-tick {
   from {
     opacity: 0;
@@ -392,6 +403,10 @@ body {
   animation: dot-bounce 1.4s var(--ease-in-out) 0.32s infinite;
 }
 
+.hero-state-enter {
+  animation: hero-state-enter 300ms var(--ease-out);
+}
+
 .animate-countdown-tick {
   animation: countdown-tick var(--duration-instant) var(--ease-out);
 }
@@ -409,7 +424,8 @@ body {
   .animate-dot-bounce,
   .animate-dot-bounce-delay-1,
   .animate-dot-bounce-delay-2,
-  .animate-countdown-tick {
+  .animate-countdown-tick,
+  .hero-state-enter {
     animation: none;
   }
 
@@ -431,6 +447,37 @@ body {
 
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Map Overrides ── */
+.mapboxgl-ctrl-logo {
+  opacity: 0.5;
+}
+
+.mapboxgl-ctrl-group {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.mapboxgl-ctrl-group button {
+  border-color: var(--border) !important;
+}
+
+.mapboxgl-ctrl-group button + button {
+  border-top-color: var(--border) !important;
+}
+
+.mapboxgl-ctrl-group button:focus:first-child {
+  border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+}
+
+.mapboxgl-ctrl-group button:focus:last-child {
+  border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+}
+
+.mapboxgl-ctrl-icon {
+  filter: invert(1);
 }
 
 /* ── Scrollbar (hide on mobile, subtle on desktop preview) ── */

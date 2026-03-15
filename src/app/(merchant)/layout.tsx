@@ -1,7 +1,14 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { BottomNav } from "@/components/nav/bottom-nav";
 import { findUserByAuthId } from "@/lib/services/auth";
 import { createServerSupabaseClient } from "@/lib/supabase";
+
+const MERCHANT_NAV_ITEMS = [
+  { label: "Dashboard", href: "/dashboard", icon: "layout-dashboard" },
+  { label: "Courts", href: "/courts", icon: "map-pin" },
+  { label: "Upsells", href: "/upsells", icon: "shopping-bag" },
+];
 
 export default async function MerchantLayout({
   children,
@@ -32,26 +39,7 @@ export default async function MerchantLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <main className="flex-1 pb-16">{children}</main>
-      <nav className="fixed bottom-0 left-1/2 flex h-14 w-full max-w-[var(--viewport-max)] -translate-x-1/2 items-center justify-around border-t border-border bg-background safe-area-bottom">
-        <a
-          href="/dashboard"
-          className="text-small-medium text-text-secondary hover:text-text-primary"
-        >
-          Dashboard
-        </a>
-        <a
-          href="/courts"
-          className="text-small-medium text-text-secondary hover:text-text-primary"
-        >
-          Courts
-        </a>
-        <a
-          href="/upsells"
-          className="text-small-medium text-text-secondary hover:text-text-primary"
-        >
-          Upsells
-        </a>
-      </nav>
+      <BottomNav items={MERCHANT_NAV_ITEMS} />
     </div>
   );
 }

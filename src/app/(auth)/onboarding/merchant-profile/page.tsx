@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { Ace } from "@/components/ace/ace";
 import { MerchantProfileForm } from "@/components/auth/merchant-profile-form";
 
 export default function MerchantProfilePage() {
@@ -7,7 +7,7 @@ export default function MerchantProfilePage() {
       {/* Ace + heading */}
       <div className="flex flex-col items-center gap-3 pt-8 pb-8">
         <div className="animate-feed-enter">
-          <Image src="/ace.svg" alt="Ace" width={80} height={100} priority />
+          <Ace size={80} />
         </div>
         <div className="text-center">
           <h1 className="text-title-lg mb-2">Set up your venue</h1>

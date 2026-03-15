@@ -169,6 +169,7 @@ model User {
   ratingsGiven          PlayerRating[]         @relation("PlayerRatingRater")
   ratingsReceived       PlayerRating[]         @relation("PlayerRatingRated")
   notifications         Notification[]
+  slotHolds             CourtSlotHold[]
 
   @@map("users")
 }
@@ -257,6 +258,7 @@ model Court {
   venueProposals VenueProposal[]
   sessions       Session[]           @relation("SessionCourt")
   bookings       Booking[]
+  slotHolds      CourtSlotHold[]
 
   @@index([venueId])
   @@map("courts")
@@ -279,6 +281,26 @@ model CourtAvailability {
   @@index([courtId, dayOfWeek])
   @@index([courtId, specificDate])
   @@map("court_availabilities")
+}
+
+model CourtSlotHold {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courtId   String   @map("court_id") @db.Uuid
+  date      DateTime @db.Date
+  startTime DateTime @map("start_time") @db.Time()
+  endTime   DateTime @map("end_time") @db.Time()
+  heldById  String   @map("held_by_id") @db.Uuid
+  sessionId String?  @unique @map("session_id") @db.Uuid
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  court   Court    @relation(fields: [courtId], references: [id])
+  heldBy  User     @relation(fields: [heldById], references: [id])
+  session Session? @relation(fields: [sessionId], references: [id])
+
+  @@index([courtId, date, startTime])
+  @@index([expiresAt])
+  @@map("court_slot_holds")
 }
 
 model UpsellItem {
@@ -328,8 +350,11 @@ model Session {
 
   creator        User            @relation("SessionCreator", fields: [creatorId], references: [id])
   venue          Venue?          @relation("SessionVenue", fields: [venueId], references: [id])
+  isVisible              Boolean       @default(true) @map("is_visible")
+
   court          Court?          @relation("SessionCourt", fields: [courtId], references: [id])
   players        SessionPlayer[]
+  slotHold       CourtSlotHold?
   matchRequests  MatchRequest[]
   venueProposals VenueProposal[]
   booking        Booking?
@@ -476,6 +501,7 @@ model Booking {
   commissionAmount        Decimal       @map("commission_amount") @db.Decimal(10, 2)
   commissionRate          Decimal       @map("commission_rate") @db.Decimal(5, 4)
   merchantPayoutAmount    Decimal       @map("merchant_payout_amount") @db.Decimal(10, 2)
+  creatorId               String?       @map("creator_id") @db.Uuid
   stripeCheckoutSessionId String?       @map("stripe_checkout_session_id")
   stripePaymentIntentId   String?       @map("stripe_payment_intent_id")
   status                  BookingStatus @default(PENDING)
@@ -501,6 +527,7 @@ model BookingPlayerShare {
   courtShareAmount      Decimal            @map("court_share_amount") @db.Decimal(10, 2)
   upsellTotal           Decimal            @map("upsell_total") @db.Decimal(10, 2)
   totalAmount           Decimal            @map("total_amount") @db.Decimal(10, 2)
+  isCreator             Boolean            @default(false) @map("is_creator")
   stripePaymentIntentId String?            @map("stripe_payment_intent_id")
   status                PaymentShareStatus @default(PENDING)
   createdAt             DateTime           @default(now()) @map("created_at")
